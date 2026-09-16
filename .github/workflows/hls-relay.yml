@@ -2,34 +2,43 @@ name: HLS Stream Relay
 
 on:
   schedule:
-    - cron: '0 */5 * * *' # Every 5 hours auto-run
+    - cron: '0 */5 * * *'
   workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
 
 jobs:
   relay:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
-      - name: Install FFmpeg
+      - name: Install FFmpeg & Python Tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y ffmpeg
+          sudo apt-get install -y ffmpeg python3-pip
+          pip3 install streamlink
 
-      - name: Convert Geo-blocked Stream to Public HLS
+      - name: Create Stream Directory
+        run: mkdir -p stream
+
+      - name: Extract and Segment HLS Stream
         run: |
-          mkdir -p stream
           cd stream
-          # Target server headers spoofing + Native HLS Segmenting
+          # Geo-blocked target headers bypass with FFmpeg
           ffmpeg -headers "Referer: https://player4.spirituallifewell.com/
-          User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64)" \
+          User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36" \
           -i "https://player4.spirituallifewell.com/videos/abbd4fae-f28d-41c6-8ff0-1942faf3aec2" \
           -c copy -f hls -hls_time 4 -hls_list_size 5 -hls_flags delete_segments live.m3u8 &
           sleep 30
 
       - name: Deploy Stream Files to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v3
+        uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./stream
+          
