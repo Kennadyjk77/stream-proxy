@@ -1,0 +1,35 @@
+name: HLS Stream Relay
+
+on:
+  schedule:
+    - cron: '0 */5 * * *' # Every 5 hours auto-run
+  workflow_dispatch:
+
+jobs:
+  relay:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v3
+
+      - name: Install FFmpeg
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg
+
+      - name: Convert Geo-blocked Stream to Public HLS
+        run: |
+          mkdir -p stream
+          cd stream
+          # Target server headers spoofing + Native HLS Segmenting
+          ffmpeg -headers "Referer: https://player4.spirituallifewell.com/
+          User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64)" \
+          -i "https://player4.spirituallifewell.com/videos/abbd4fae-f28d-41c6-8ff0-1942faf3aec2" \
+          -c copy -f hls -hls_time 4 -hls_list_size 5 -hls_flags delete_segments live.m3u8 &
+          sleep 30
+
+      - name: Deploy Stream Files to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./stream
