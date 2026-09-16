@@ -3,7 +3,7 @@ const axios = require('axios');
 const app = express();
 
 const PORT = process.env.PORT || 3000;
-const TARGET_STREAM = 'newcdn.tamils.click/live1channel/tracks-v1a1/mono.ts.m3u8';
+const TARGET_STREAM = 'https://player4.spirituallifewell.com/videos/abbd4fae-f28d-41c6-8ff0-1942faf3aec2';
 
 app.use((req, res, next) => {
     res.header('Access-Control-Allow-Origin', '*');
